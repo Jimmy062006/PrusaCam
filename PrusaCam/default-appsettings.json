@@ -1,0 +1,8 @@
+﻿{
+  "StreamURL": "rtsp://192.168.1.1:7447/Jghsufh8hoDFue?enablertp",
+  "Delay": 30,
+  "Token": "Gu09248gj2oijgsgo",
+  "BaseUrl": "https://connect.prusa3d.com",
+  "FfmpegPathWindows": "C:\\ffmpeg-full_build\\bin\\ffmpeg.exe",
+  "FfmpegPathLinux": "/usr/bin/ffmpeg"
+}
