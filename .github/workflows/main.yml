@@ -2,11 +2,12 @@ name: Publish .NET 8 Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'  # Triggers the workflow on version tags, e.g., v1.0.0
+    branches:
+      - main  # Adjust this to your default branch or the branch you want to monitor
 
 jobs:
   build:
+    if: contains(github.event.head_commit.message, 'Release:')
     runs-on: ubuntu-latest
 
     steps:
@@ -30,7 +31,7 @@ jobs:
     - name: Zip the published files
       run: |
         cd ./publish
-        zip -r ../PrusaCam-${{ github.ref_name }}.zip *
+        zip -r ../PrusaCam-${{ github.sha }}.zip *
 
     - name: Create GitHub Release
       id: create_release
@@ -38,10 +39,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: PrusaCam ${{ github.ref_name }}
+        tag_name: ${{ github.sha }}
+        release_name: PrusaCam ${{ github.sha }}
         body: |
-          Release notes for PrusaCam ${{ github.ref_name }}.
+          Release notes for PrusaCam ${{ github.sha }}.
         draft: false
         prerelease: false
 
@@ -51,6 +52,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./PrusaCam-${{ github.ref_name }}.zip
-        asset_name: PrusaCam-${{ github.ref_name }}.zip
+        asset_path: ./PrusaCam-${{ github.sha }}.zip
+        asset_name: PrusaCam-${{ github.sha }}.zip
         asset_content_type: application/zip
