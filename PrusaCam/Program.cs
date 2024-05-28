@@ -195,7 +195,7 @@ internal class Program
 					}
 
 					Console.WriteLine($"Uploading {stream2.Length} bytes");
-					await apiClient.SnapshotAsync(stream2);
+					await apiClient.SnapshotAsync(stream2); //Send the image to Prusa API
 				}
 			}
 		}
