@@ -1,0 +1,71 @@
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+
+    # Extract version from commit message if it matches the pattern
+    - name: Extract version from commit message
+      id: extract_version
+      run: |
+        if [[ "${GITHUB_EVENT_HEAD_COMMIT_MESSAGE}" =~ Release:\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          VERSION=$(echo ${GITHUB_EVENT_HEAD_COMMIT_MESSAGE} | grep -oP 'Release:\ Kv[0-9]+\.[0-9]+\.[0-9]+')
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "MATCH_FOUND=true" >> $GITHUB_ENV
+        else
+          echo "MATCH_FOUND=false" >> $GITHUB_ENV
+        fi
+
+    # Package the build artifacts
+    - name: Package artifacts
+      run: dotnet publish -c Release -o out
+
+    # Create a release only if the commit message contains the release pattern
+    - name: Create GitHub release
+      id: create_release
+      if: env.MATCH_FOUND == 'true'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.VERSION }}
+        release_name: Release ${{ env.VERSION }}
+        draft: false
+        prerelease: false
+
+    # Compress the output directory into a zip file only if the commit message contains the release pattern
+    - name: Compress artifacts
+      if: env.MATCH_FOUND == 'true'
+      run: zip -r PrusaCam-${{ env.VERSION }}.zip ./out
+
+    # Upload release asset only if the commit message contains the release pattern
+    - name: Upload Release Asset
+      if: env.MATCH_FOUND == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./PrusaCam-${{ env.VERSION }}.zip
+        asset_name: PrusaCam-${{ env.VERSION }}.zip
+        asset_content_type: application/zip
