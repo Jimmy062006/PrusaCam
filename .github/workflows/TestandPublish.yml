@@ -13,14 +13,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+
     - name: Restore dependencies
       run: dotnet restore
+
     - name: Build
       run: dotnet build --no-restore
+
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
@@ -36,9 +40,18 @@ jobs:
           echo "MATCH_FOUND=false" >> $GITHUB_ENV
         fi
 
-    # Package the build artifacts
-    - name: Package artifacts
-      run: dotnet publish -c Release -o out
+    # Find all .csproj files and publish them individually
+    - name: Publish projects
+      if: env.MATCH_FOUND == 'true'
+      run: |
+        for project in $(find . -name '*.csproj'); do
+          dotnet publish $project -c Release -o out/$(basename $project .csproj)
+        done
+
+    # Compress the output directories into a zip file only if the commit message contains the release pattern
+    - name: Compress artifacts
+      if: env.MATCH_FOUND == 'true'
+      run: zip -r PrusaCam-${{ env.VERSION }}.zip ./out
 
     # Create a release only if the commit message contains the release pattern
     - name: Create GitHub release
@@ -52,11 +65,6 @@ jobs:
         release_name: Release ${{ env.VERSION }}
         draft: false
         prerelease: false
-
-    # Compress the output directory into a zip file only if the commit message contains the release pattern
-    - name: Compress artifacts
-      if: env.MATCH_FOUND == 'true'
-      run: zip -r PrusaCam-${{ env.VERSION }}.zip ./out
 
     # Upload release asset only if the commit message contains the release pattern
     - name: Upload Release Asset
