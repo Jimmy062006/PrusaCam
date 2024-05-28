@@ -54,8 +54,8 @@ internal class Program
 			var configFile = "appsettings.json";
 			if (!File.Exists(configFile))
 			{
-				Console.WriteLine($"Configuration file {configFile} not found.");
-				return;
+				Console.WriteLine($"Configuration file {configFile} not found. Creating from default settings...");
+				CreateConfigurationFromDefaults();
 			}
 
 			var configJson = File.ReadAllText(configFile);
@@ -70,6 +70,51 @@ internal class Program
 		{
 			Console.WriteLine($"Error loading configuration: {ex.Message}");
 		}
+	}
+
+	private static void CreateConfigurationFromDefaults()
+	{
+		try
+		{
+			var defaultConfigFile = "default-appsettings.json";
+			if (!File.Exists(defaultConfigFile))
+			{
+				Console.WriteLine($"Default configuration file {defaultConfigFile} not found.");
+				return;
+			}
+
+			var defaultConfigJson = File.ReadAllText(defaultConfigFile);
+			var defaultConfig = JsonSerializer.Deserialize<PrusaCam.Configuration>(defaultConfigJson);
+
+			if (defaultConfig == null)
+			{
+				Console.WriteLine("Default configuration file is invalid or empty.");
+				return;
+			}
+
+			Console.WriteLine("Please enter the following settings:");
+			defaultConfig.Token = PromptForSetting("Token", defaultConfig.Token);
+			defaultConfig.BaseUrl = PromptForSetting("BaseUrl", defaultConfig.BaseUrl);
+			defaultConfig.StreamURL = PromptForSetting("StreamURL", defaultConfig.StreamURL);
+			defaultConfig.Delay = int.Parse(PromptForSetting("Delay", defaultConfig.Delay.ToString()));
+			defaultConfig.FfmpegPathWindows = PromptForSetting("FfmpegPathWindows", defaultConfig.FfmpegPathWindows);
+			defaultConfig.FfmpegPathLinux = PromptForSetting("FfmpegPathLinux", defaultConfig.FfmpegPathLinux);
+
+			var newConfigJson = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
+			File.WriteAllText("appsettings.json", newConfigJson);
+			Console.WriteLine("Configuration saved to appsettings.json.");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error creating configuration: {ex.Message}");
+		}
+	}
+
+	private static string PromptForSetting(string settingName, string defaultValue)
+	{
+		Console.Write($"{settingName} [{defaultValue}]: ");
+		var input = Console.ReadLine();
+		return string.IsNullOrEmpty(input) ? defaultValue : input;
 	}
 
 	private static async void UploadTimer_Elapsed(object sender, ElapsedEventArgs e)
