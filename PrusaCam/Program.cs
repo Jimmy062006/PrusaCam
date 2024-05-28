@@ -14,11 +14,11 @@ internal class Program
 {
 	private static readonly HttpClient httpClient = new();
 	static DateTime lastRun = DateTime.MinValue;
-	static openapiClient apiClient;
+	static openapiClient? apiClient;
 	private static readonly SemaphoreSlim semaphoreSlim = new(1, 1); // Semaphore to limit concurrent access
 	private static readonly System.Timers.Timer uploadTimer = new System.Timers.Timer(); // Timer for controlling upload frequency
 	private static bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-	private static PrusaCam.Configuration config;
+	private static PrusaCam.Configuration? config;
 
 	static async Task Main(string[] args)
 	{
@@ -93,12 +93,12 @@ internal class Program
 			}
 
 			Console.WriteLine("Please enter the following settings:");
-			defaultConfig.Token = PromptForSetting("Token", defaultConfig.Token);
-			defaultConfig.BaseUrl = PromptForSetting("BaseUrl", defaultConfig.BaseUrl);
-			defaultConfig.StreamURL = PromptForSetting("StreamURL", defaultConfig.StreamURL);
+			defaultConfig.Token = PromptForSetting("Token", defaultConfig.Token ?? "");
+			defaultConfig.BaseUrl = PromptForSetting("BaseUrl", defaultConfig.BaseUrl ?? "");
+			defaultConfig.StreamURL = PromptForSetting("StreamURL", defaultConfig.StreamURL ?? "");
 			defaultConfig.Delay = int.Parse(PromptForSetting("Delay", defaultConfig.Delay.ToString()));
-			defaultConfig.FfmpegPathWindows = PromptForSetting("FfmpegPathWindows", defaultConfig.FfmpegPathWindows);
-			defaultConfig.FfmpegPathLinux = PromptForSetting("FfmpegPathLinux", defaultConfig.FfmpegPathLinux);
+			defaultConfig.FfmpegPathWindows = PromptForSetting("FfmpegPathWindows", defaultConfig.FfmpegPathWindows ?? "");
+			defaultConfig.FfmpegPathLinux = PromptForSetting("FfmpegPathLinux", defaultConfig.FfmpegPathLinux ?? "");
 
 			var newConfigJson = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
 			File.WriteAllText("appsettings.json", newConfigJson);
