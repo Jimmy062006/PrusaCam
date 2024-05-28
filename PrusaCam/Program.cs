@@ -190,7 +190,7 @@ internal class Program
 				{
 					if (stream2.Length == 0)
 					{
-						Console.WriteLine("Resized image is empty.");
+						Console.WriteLine("Resized image is empty."); //Opps
 						return;
 					}
 
